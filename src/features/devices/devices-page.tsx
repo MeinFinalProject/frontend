@@ -18,8 +18,11 @@ import { api, useAction, useApi } from '@/lib/api'
 import type { Device, DeviceActivity } from '@/lib/contracts'
 import { dateTime } from '@/lib/format'
 import { useCatalog } from '@/features/academic/data'
+import { OperationalBadge, OperationalDetails } from './operational-status'
+import { useOperationalStatus } from './data'
 export function DevicesPage() {
   const devices = useApi<Device[]>('/admin/devices')
+  const operational = useOperationalStatus()
   const [create, setCreate] = useState(false)
   const [selected, setSelected] = useState<Device>()
   return (
@@ -35,15 +38,19 @@ export function DevicesPage() {
         }
       />
       <Notice>
-        Status aktif menunjukkan izin akses perangkat, bukan koneksi langsung. Backend belum
-        menyediakan heartbeat atau konfirmasi galeri terpasang.
+        Izin akses, koneksi, dan kesiapan presensi ditampilkan terpisah. Status diperbarui dari
+        laporan perangkat; buka detail untuk memeriksa galeri dan antrean pengiriman.
       </Notice>
       <Panel title="Perangkat terdaftar">
         <ErrorNotice error={devices.error} />
+        <ErrorNotice error={operational.error} />
         {devices.isPending ? (
           <Loading />
         ) : devices.data?.length ? (
-          <Table caption="Perangkat" headers={['Perangkat', 'ID perangkat', 'Akses', '']}>
+          <Table
+            caption="Perangkat"
+            headers={['Perangkat', 'ID perangkat', 'Akses', 'Operasional', '']}
+          >
             {devices.data.map((d) => (
               <tr key={d.device_id}>
                 <td className="font-medium">{d.device_name}</td>
@@ -54,6 +61,15 @@ export function DevicesPage() {
                   >
                     {d.device_enabled ? 'Diizinkan' : 'Dinonaktifkan'}
                   </span>
+                </td>
+                <td>
+                  <OperationalBadge
+                    status={
+                      operational.error
+                        ? undefined
+                        : operational.data?.find((s) => s.device_id === d.device_id)
+                    }
+                  />
                 </td>
                 <td>
                   <Button variant="ghost" size="sm" onClick={() => setSelected(d)}>
@@ -141,6 +157,7 @@ function CreateDevice({ close }: { close: () => void }) {
 function DeviceEditor({ device, close }: { device: Device; close: () => void }) {
   const base = `/admin/devices/${encodeURIComponent(device.device_id)}`
   const activity = useApi<DeviceActivity>(`${base}/activity`)
+  const operational = useOperationalStatus()
   const catalog = useCatalog()
   const [rotate, setRotate] = useState(false)
   const room = useAction((f: FormData) =>
@@ -159,7 +176,21 @@ function DeviceEditor({ device, close }: { device: Device; close: () => void }) 
     <Modal title={device.device_name} description={device.device_id} open onClose={close}>
       <div className="space-y-5">
         <ErrorNotice
-          error={activity.error || catalog.error || room.error || status.error || credential.error}
+          error={
+            activity.error ||
+            operational.error ||
+            catalog.error ||
+            room.error ||
+            status.error ||
+            credential.error
+          }
+        />
+        <OperationalDetails
+          status={
+            operational.error
+              ? undefined
+              : operational.data?.find((s) => s.device_id === device.device_id)
+          }
         />
         <div>
           <p className="muted text-sm">Observasi terakhir diterima server</p>

@@ -75,7 +75,6 @@ test('student submits KRS; assigned lecturer approves; membership appears', asyn
     .fill('Pilihan kelas telah diperiksa pada uji integrasi.')
   await lecturer.getByRole('button', { name: 'Kirim keputusan' }).click()
   await expect(lecturer.getByRole('table')).toContainText('Disetujui')
-  await page.reload()
   await expect(page.getByRole('table')).toContainText('Disetujui')
   await page.getByRole('link', { name: 'Perkuliahan', exact: true }).click()
   await expect(page.getByLabel('Kelas', { exact: true })).toContainText('Rekayasa Perangkat Lunak')
@@ -153,7 +152,11 @@ test('admin creates reference data and device; lecturer schedules an actual sess
     /[a-zA-Z0-9_-]{20,}/,
   )
   await page.getByRole('button', { name: 'Tutup', exact: true }).click()
-  await page.getByRole('button', { name: 'Kelola perangkat' }).click()
+  await page
+    .getByRole('row')
+    .filter({ hasText: 'Perangkat Uji Browser' })
+    .getByRole('button', { name: 'Kelola perangkat' })
+    .click()
   await page.getByLabel('Ruangan penempatan').selectOption(fixture().room_id)
   await page.getByRole('button', { name: 'Simpan ruangan' }).click()
   await expect(page.getByRole('status')).toContainText('Penempatan ruangan tersimpan.')

@@ -77,7 +77,7 @@ try
     db.Add(new SessionRoster { TeachingSessionId = ongoing.TeachingSessionId, StudentId = studentRecord.StudentId });
     await db.SaveChangesAsync();
     // Fixtures contain only disposable test accounts; stdout is consumed privately by global setup.
-    Console.WriteLine("E2E_READY:" + JsonSerializer.Serialize(new { password, student_id = studentRecord.StudentId, session_id = historical.TeachingSessionId, ongoing_session_id = ongoing.TeachingSessionId, class_id = classId, term_id = termId, room_id = roomId, program_id = programId }));
+    Console.WriteLine("E2E_READY:" + JsonSerializer.Serialize(new { password, model_hash = config["Biometrics:ModelSha256"], student_id = studentRecord.StudentId, session_id = historical.TeachingSessionId, ongoing_session_id = ongoing.TeachingSessionId, class_id = classId, term_id = termId, room_id = roomId, program_id = programId }));
     await Console.In.ReadLineAsync();
 }
 finally

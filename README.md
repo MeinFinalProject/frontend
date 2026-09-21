@@ -166,4 +166,26 @@ Browser tests cover account registration/approval, course registration across ro
 
 Configure production response headers, including a content security policy for same-origin scripts, fonts, and connections; allow `blob:` for local image previews; restrict framing with `frame-ancestors 'none'`; set `object-src 'none'`, `base-uri 'self'`, and `X-Content-Type-Options: nosniff`. Account for Radix's inline layout styles in the style policy. Enable HSTS after HTTPS is configured. Do not log Authorization headers or credential responses. Allow camera access only from the application origin with `Permissions-Policy: camera=(self), microphone=()`. The app has no service worker or persistent academic-data cache.
 
-This stage prioritizes actual sessions and approval workflows. Recurring schedule generation, PDF/XLSX report formats, email password recovery, and push notifications are not implemented. Full device heartbeat and gallery-install acknowledgments remain a separate backend/Edge feature; an active sample count is not proof of device readiness. Registration, enrollment, and session lists follow backend limits and show a notice when the limit is reached; accounts, students, observations, and audit records support pagination. The thesis's 38-hour disciplinary background is outside the prototype's scope.
+This stage prioritizes actual sessions and approval workflows. Recurring schedule generation, PDF/XLSX report formats, email password recovery, and notifications outside an open portal are not implemented. Operational device monitoring includes connectivity, health, installed gallery and attendance readiness; an active enrollment sample count alone is not proof of device readiness. Registration, enrollment, and session lists follow backend limits and show a notice when the limit is reached; accounts, students, observations, and audit records support pagination. The thesis's 38-hour disciplinary background is outside the prototype's scope.
+
+## Live updates and device monitoring
+
+`features/realtime` connects authenticated human sessions to the backend's `/api/v1/live` SignalR hub. Messages only invalidate TanStack Query data; they do not create attendance records or duplicate API business state. Updates are coalesced, reconnect refreshes missed changes, and disconnected visible tabs refresh through HTTP every 30 seconds. Logout disposes the connection and the existing session handler clears private cached data. Ordinary lecturer and student workflows show API-confirmed changes without connection diagnostics.
+
+Administrators can inspect access permission separately from connected, healthy and attendance-ready states. Device details show the server's readiness reasons, latest authenticated report, installed versus published gallery versions and delivery queues. The operational query also refreshes every 15 seconds to age quiet observations and recover missed notifications. A failed query displays unknown status instead of presenting cached readiness as current.
+
+Vite proxies HTTP and WebSocket traffic through the existing `/api` route. Production hosting must proxy WebSocket upgrades and SignalR HTTP transports to the same backend, use trusted HTTPS, preserve Authorization, and redact query strings from access logs (browser WebSocket authentication uses a query token). The backend revalidates active human/device authorization and owns readiness calculations. Run one backend instance for this prototype.
+
+The browser suite includes a real SignalR update between two administrator sessions. To also run native Windows telemetry through PostgreSQL and the portal, build the backend integration probe, then run:
+
+```powershell
+# From the backend checkout, with sibling edge-client checkout at ../TA:
+cmake -S tests/EdgeContractProbe -B .local/native-probe-build -A x64 -DEDGE_SOURCE_DIR=C:/path/to/TA
+cmake --build .local/native-probe-build --config Release
+
+# From this frontend checkout:
+$env:EDGE_REALTIME_PROBE = 'C:\path\to\TA_backend\.local\native-probe-build\Release\edge_realtime_probe.exe'
+npm run test:e2e
+```
+
+The optional native test uses an isolated PostgreSQL schema, temporary DPAPI credentials and controlled telemetry. It checks gallery publication notification, delayed installation acknowledgement, storage failure, disconnect/reconnect reconciliation and device disablement. It does not capture a face. The normal application still starts with `npm run dev`; integration probes are test tools only.

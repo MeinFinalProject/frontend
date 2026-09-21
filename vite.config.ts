@@ -17,6 +17,7 @@ export default defineConfig({
       '/api': {
         target: process.env.BACKEND_URL || 'https://localhost:7143',
         changeOrigin: true,
+        ws: true,
         secure: true,
         agent: new https.Agent({ rejectUnauthorized: true }),
       },
