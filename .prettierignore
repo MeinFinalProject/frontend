@@ -1,0 +1,8 @@
+dist
+node_modules
+.local
+test-results
+playwright-report
+**/bin
+**/obj
+package-lock.json
