@@ -14,6 +14,7 @@ import { className, roomName, useCatalog } from '@/features/academic/data'
 import { allPages, useApi } from '@/lib/api'
 import type { Account, Class, Enrollment, Registration, Session } from '@/lib/contracts'
 import { dateTime, todayWib } from '@/lib/format'
+import { StudentOverview } from './student-overview'
 import {
   Empty,
   ErrorNotice,
@@ -87,6 +88,7 @@ export function Dashboard() {
         </div>
       )}
       <ErrorNotice error={catalog.error || classes.error} />
+      {role === 'student' && <StudentOverview />}
       <Panel
         title="Perkuliahan hari ini"
         description="Sesi aktual yang dijadwalkan untuk hari ini."
@@ -128,18 +130,6 @@ export function Dashboard() {
           )
         )}
       </Panel>
-      {role === 'student' && (
-        <div className="onboarding-strip">
-          <Fingerprint size={26} />
-          <div>
-            <h2>Siap untuk presensi dengan wajah?</h2>
-            <p className="muted text-sm mt-1">
-              Lengkapi pendaftaran wajah dan tunggu verifikasi administrator.
-            </p>
-          </div>
-          <PageLink to={paths.enrollments}>Lihat pendaftaran wajah</PageLink>
-        </div>
-      )}
     </>
   )
 }

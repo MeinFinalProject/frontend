@@ -15,5 +15,6 @@ export const paths = {
   accounts: '/accounts',
   activity: '/attendance-activity',
   devices: '/devices',
+  audit: '/audit-trail',
   settings: '/settings',
 } as const

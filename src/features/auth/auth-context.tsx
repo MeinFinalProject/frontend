@@ -11,6 +11,7 @@ const AuthContext = createContext<{
   account: Account | undefined
   session: Login | null
   pending: boolean
+  signedOut: boolean
   error: unknown
   login: (s: Login) => void
   logout: () => Promise<void>
@@ -18,6 +19,7 @@ const AuthContext = createContext<{
 } | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, update] = useState(readSession)
+  const [signedOut, markSignedOut] = useState(false)
   useEffect(() => {
     const sync = () => {
       queryClient.clear()
@@ -42,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   })
   const logout = async () => {
     await api('/auth/logout', { method: 'POST' })
+    markSignedOut(true)
     setSession(null)
   }
   return (
@@ -50,8 +53,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         account: session ? me.data : undefined,
         session,
         pending: !!session && me.isPending,
+        signedOut,
         error: me.error,
-        login: setSession,
+        login: (session) => {
+          markSignedOut(false)
+          setSession(session)
+        },
         logout,
         retry: () => {
           void me.refetch()
@@ -73,7 +80,13 @@ export function RequireAuth({ children, roles }: { children: ReactNode; roles?: 
   const auth = useAuth()
   const location = useLocation()
   if (!auth.session)
-    return <Navigate to={paths.login} state={{ from: location.pathname }} replace />
+    return (
+      <Navigate
+        to={paths.login}
+        state={auth.signedOut ? null : { from: location.pathname }}
+        replace
+      />
+    )
   if (auth.pending) return <Loading />
   if (auth.error)
     return (

@@ -45,6 +45,9 @@ const Devices = lazy(() =>
 const Settings = lazy(() =>
   import('@/features/auth/settings').then((m) => ({ default: m.SettingsPage })),
 )
+const Audit = lazy(() =>
+  import('@/features/audit/audit-page').then((m) => ({ default: m.AuditPage })),
+)
 
 export function AppRouter() {
   return (
@@ -131,6 +134,14 @@ export function AppRouter() {
               }
             />
             <Route path={paths.settings} element={<Settings />} />
+            <Route
+              path={paths.audit}
+              element={
+                <RequireAuth roles={['administrator']}>
+                  <Audit />
+                </RequireAuth>
+              }
+            />
             <Route
               path="*"
               element={

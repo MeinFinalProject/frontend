@@ -24,6 +24,7 @@ import type { Roster, RosterRow, Summary } from '@/lib/contracts'
 import { dateTime, labels, percentage } from '@/lib/format'
 import { className, roomName, useCatalog } from '@/features/academic/data'
 import { SessionEditor } from '@/features/sessions/session-editor'
+import { ReportExport } from './report-export'
 export function SessionDetailPage() {
   const now = useNow()
   const { id } = useParams()
@@ -72,6 +73,13 @@ export function SessionDetailPage() {
                 </div>
               </div>
               <div className="ml-auto flex flex-wrap gap-2">
+                {!cancelled && (
+                  <ReportExport
+                    id={id!}
+                    kind="session"
+                    classLabel={className(catalog.data, s.academic_class_id)}
+                  />
+                )}
                 {future && !cancelled && (
                   <>
                     <Button variant="outline" onClick={() => setEdit(true)}>
@@ -277,7 +285,15 @@ export function ClassSummaryPage() {
   return (
     <>
       <PageLink to={paths.sessions}>Kembali ke perkuliahan</PageLink>
-      <PageTitle title="Rekap kehadiran kelas" description={className(catalog.data, id!)} />
+      <PageTitle
+        title="Rekap kehadiran kelas"
+        description={className(catalog.data, id!)}
+        action={
+          data.data && (
+            <ReportExport id={id!} kind="class" classLabel={className(catalog.data, id!)} />
+          )
+        }
+      />
       <ErrorNotice error={data.error || catalog.error} />
       <Panel
         title="Kehadiran per mahasiswa"

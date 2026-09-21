@@ -1,5 +1,5 @@
-import { useApi } from '@/lib/api'
-import type { Student, StudentAttendance } from '@/lib/contracts'
+import { CurrentAttendance } from './current-attendance'
+import { useStudentAttendance } from './data'
 import { className, useCatalog } from '@/features/academic/data'
 import { dateTime, percentage } from '@/lib/format'
 import {
@@ -13,19 +13,16 @@ import {
   Table,
 } from '@/components/shared'
 export function StudentAttendancePage() {
-  const profile = useApi<Student>('/academic/my-profile')
+  const { profile, attendance: data } = useStudentAttendance()
   const catalog = useCatalog()
-  const data = useApi<StudentAttendance>(
-    `/attendance/students/${profile.data?.student_id}`,
-    !!profile.data,
-  )
   return (
     <>
       <PageTitle
         title="Presensi saya"
-        description="Catatan kehadiran per sesi perkuliahan yang telah selesai."
+        description="Pantau presensi sesi berjalan dan riwayat kehadiran perkuliahan Anda."
       />
       <ErrorNotice error={profile.error || data.error || catalog.error} />
+      <CurrentAttendance />
       <Notice>
         Persentase dihitung dari sesi yang sudah selesai. Hadir dan terlambat dihitung sebagai
         kehadiran; sesi dengan izin tidak masuk pembagi. Jika ada catatan yang tidak sesuai, hubungi

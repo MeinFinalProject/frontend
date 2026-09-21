@@ -35,6 +35,7 @@ export class ApiError extends Error {
   }
 }
 const messages: Record<string, string> = {
+  invalid_audit_filter: 'Periksa filter audit. Waktu akhir harus sesudah waktu awal.',
   invalid_session_window:
     'Periksa waktu mulai dan selesai, batas presensi, serta toleransi keterlambatan. Sesi harus dibuat sebelum presensi dibuka.',
   session_outside_term: 'Tanggal perkuliahan harus berada dalam semester kelas.',

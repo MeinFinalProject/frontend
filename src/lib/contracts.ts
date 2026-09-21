@@ -126,6 +126,13 @@ export interface StudentAttendance {
   student_id: string
   summaries: Summary[]
   sessions: { session: Session; status: string; attendance: Attendance | null }[]
+  ongoing_sessions: { session: Session; status: string; attendance: Attendance | null }[]
+}
+export interface EnrollmentStatus {
+  latest_enrollment: Enrollment | null
+  latest_sample_count: number
+  active_sample_count: number
+  required_samples: number
 }
 export interface Enrollment {
   biometric_enrollment_id: string

@@ -11,6 +11,7 @@ import {
   LogOut,
   Menu,
   Monitor,
+  History,
   Settings2,
   Users,
   X,
@@ -42,6 +43,7 @@ const navigation: { to: string; title: string; icon: LucideIcon; roles?: Role[] 
     roles: ['administrator'],
   },
   { to: paths.devices, title: 'Perangkat', icon: Monitor, roles: ['administrator'] },
+  { to: paths.audit, title: 'Riwayat audit', icon: History, roles: ['administrator'] },
   { to: paths.settings, title: 'Pengaturan akun', icon: Settings2 },
 ]
 export function Layout() {

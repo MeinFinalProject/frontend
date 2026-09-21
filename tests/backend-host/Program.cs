@@ -70,9 +70,14 @@ try
     var historical = new TeachingSession { AcademicClassId = classId, LecturerId = lecturerRecord.LecturerId, ClassroomId = roomId, TeachingSessionStart = now.AddHours(-3), TeachingSessionEnd = now.AddHours(-1), TeachingSessionCourseName = "Rekayasa Perangkat Lunak · Uji", TeachingSessionCourseCredits = 3, TeachingSessionRosterFrozen = true };
     db.Add(historical);
     db.Add(new SessionRoster { TeachingSessionId = historical.TeachingSessionId, StudentId = studentRecord.StudentId });
+    var ongoing = new TeachingSession { AcademicClassId = classId, LecturerId = lecturerRecord.LecturerId, ClassroomId = roomId,
+        TeachingSessionStart = now.AddMinutes(-10), TeachingSessionEnd = now.AddMinutes(50), TeachingSessionCheckinMinutes = 60,
+        TeachingSessionCourseName = "Sesi Berjalan · Uji", TeachingSessionCourseCredits = 3, TeachingSessionRosterFrozen = true };
+    db.Add(ongoing);
+    db.Add(new SessionRoster { TeachingSessionId = ongoing.TeachingSessionId, StudentId = studentRecord.StudentId });
     await db.SaveChangesAsync();
     // Fixtures contain only disposable test accounts; stdout is consumed privately by global setup.
-    Console.WriteLine("E2E_READY:" + JsonSerializer.Serialize(new { password, student_id = studentRecord.StudentId, session_id = historical.TeachingSessionId, class_id = classId, term_id = termId, room_id = roomId, program_id = programId }));
+    Console.WriteLine("E2E_READY:" + JsonSerializer.Serialize(new { password, student_id = studentRecord.StudentId, session_id = historical.TeachingSessionId, ongoing_session_id = ongoing.TeachingSessionId, class_id = classId, term_id = termId, room_id = roomId, program_id = programId }));
     await Console.In.ReadLineAsync();
 }
 finally

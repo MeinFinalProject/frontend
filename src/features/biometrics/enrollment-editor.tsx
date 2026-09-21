@@ -14,7 +14,8 @@ import {
 import { api, useAction, useApi } from '@/lib/api'
 import type { EnrollmentDetail } from '@/lib/contracts'
 import { labels } from '@/lib/format'
-import { poses, photoError } from './photo'
+import { poses, photoError, poseInstructions, suggestedPose } from './photo'
+import { CameraCapture } from './camera-capture'
 export function EnrollmentEditor({
   id,
   student,
@@ -27,7 +28,9 @@ export function EnrollmentEditor({
   const detail = useApi<EnrollmentDetail>(`/biometric-enrollments/${id}`)
   const [file, setFile] = useState<File>()
   const [preview, setPreview] = useState('')
-  const [pose, setPose] = useState('frontal')
+  const [selectedPose, setPose] = useState<string>()
+  const pose = selectedPose ?? suggestedPose(detail.data?.samples ?? [])
+  const [source, setSource] = useState<'upload' | 'camera'>('upload')
   const [localError, setLocalError] = useState('')
   const [reason, setReason] = useState(false)
   const [publication, setPublication] = useState(false)
@@ -44,6 +47,7 @@ export function EnrollmentEditor({
     await api(`/biometric-enrollments/${id}/samples/upload`, { method: 'POST', body: f })
     setFile(undefined)
     setPreview('')
+    setPose(undefined)
   })
   const remove = useAction((sample: string) =>
     api(`/biometric-enrollments/${id}/samples/${sample}`, { method: 'DELETE' }),
@@ -134,12 +138,50 @@ export function EnrollmentEditor({
             />
             {student && draft && d.samples.length < 12 && (
               <form
-                className="upload-form space-y-4"
+                className="upload-form flex flex-col gap-4"
                 onSubmit={(e) => {
                   e.preventDefault()
                   upload.mutate()
                 }}
               >
+                <div className="flex flex-wrap gap-2" role="group" aria-label="Sumber foto">
+                  <Button
+                    type="button"
+                    variant={source === 'camera' ? 'default' : 'outline'}
+                    disabled={busy}
+                    aria-pressed={source === 'camera'}
+                    onClick={() => {
+                      setSource('camera')
+                      setFile(undefined)
+                      setPreview('')
+                      setLocalError('')
+                      upload.reset()
+                    }}
+                  >
+                    Gunakan kamera
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={source === 'upload' ? 'default' : 'outline'}
+                    disabled={busy}
+                    aria-pressed={source === 'upload'}
+                    onClick={() => {
+                      setSource('upload')
+                      setFile(undefined)
+                      setPreview('')
+                      setLocalError('')
+                      upload.reset()
+                    }}
+                  >
+                    Unggah foto
+                  </Button>
+                </div>
+                <p className="text-sm muted">
+                  {d.samples.length < 10
+                    ? 'Lengkapi sedikitnya dua foto untuk setiap arah.'
+                    : 'Lengkapi 12 foto berbeda. Arah yang masih kurang tetap harus dilengkapi.'}{' '}
+                  Kemajuan mengikuti sampel yang sudah tersimpan.
+                </p>
                 <SelectField
                   label="Arah wajah pada foto"
                   value={pose}
@@ -152,22 +194,35 @@ export function EnrollmentEditor({
                     </option>
                   ))}
                 </SelectField>
-                <Field
-                  key={d.samples.length}
-                  label="Foto wajah"
-                  type="file"
-                  accept="image/jpeg,image/png"
-                  disabled={busy}
-                  onChange={(e) => {
-                    upload.reset()
-                    const candidate = e.target.files?.[0]
-                    const error = candidate ? photoError(candidate) : null
-                    setLocalError(error || '')
-                    setFile(error ? undefined : candidate)
-                    setPreview(candidate && !error ? URL.createObjectURL(candidate) : '')
-                  }}
-                  hint="JPEG / PNG, maksimal 5 MiB. Resolusi 112–2048 piksel; foto tegak, satu wajah yang jelas."
-                />
+                {source === 'camera' && !file && (
+                  <CameraCapture
+                    instruction={poseInstructions[pose]}
+                    disabled={busy}
+                    onCapture={(photo) => {
+                      setFile(photo)
+                      setPreview(URL.createObjectURL(photo))
+                      upload.reset()
+                    }}
+                  />
+                )}
+                {source === 'upload' && (
+                  <Field
+                    key={d.samples.length}
+                    label="Foto wajah"
+                    type="file"
+                    accept="image/jpeg,image/png"
+                    disabled={busy}
+                    onChange={(e) => {
+                      upload.reset()
+                      const candidate = e.target.files?.[0]
+                      const error = candidate ? photoError(candidate) : null
+                      setLocalError(error || '')
+                      setFile(error ? undefined : candidate)
+                      setPreview(candidate && !error ? URL.createObjectURL(candidate) : '')
+                    }}
+                    hint="JPEG / PNG, maksimal 5 MiB. Resolusi 112–2048 piksel; foto tegak, satu wajah yang jelas."
+                  />
+                )}
                 {localError && <Notice tone="error">{localError}</Notice>}
                 {preview && (
                   <img
@@ -176,10 +231,29 @@ export function EnrollmentEditor({
                     className="photo-preview"
                   />
                 )}
-                <Submit pending={upload.isPending} disabled={!file || (busy && !upload.isPending)}>
-                  <Upload size={16} />
-                  Proses dan simpan foto
-                </Submit>
+                <div className="flex flex-wrap gap-2">
+                  {source === 'camera' && file && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={busy}
+                      onClick={() => {
+                        setFile(undefined)
+                        setPreview('')
+                        upload.reset()
+                      }}
+                    >
+                      Ambil ulang foto
+                    </Button>
+                  )}
+                  <Submit
+                    pending={upload.isPending}
+                    disabled={!file || (busy && !upload.isPending)}
+                  >
+                    <Upload size={16} />
+                    Proses dan simpan foto
+                  </Submit>
+                </div>
                 {upload.error && (
                   <p className="muted text-xs">
                     Jika koneksi terputus, periksa jumlah sampel sebelum mengirim ulang.
